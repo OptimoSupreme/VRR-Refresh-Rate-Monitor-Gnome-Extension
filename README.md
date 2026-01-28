@@ -17,4 +17,4 @@ This extension monitors the GNOME Shell compositor's frame rendering timing to e
 
 ## Installation
 You can install this extension directly from the GNOME Extensions website:
-[Install VRR Monitor](https://extensions.gnome.org/extension/9220/vrr-refresh-rate-monitor/)
+[Install VRR Monitor](https://extensions.gnome.org/extension/placeholder/vrr-monitor/)
