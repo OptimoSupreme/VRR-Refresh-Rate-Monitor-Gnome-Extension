@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="vrr-monitor">
+  <schema id="org.gnome.shell.extensions.vrr-monitor" path="/org/gnome/shell/extensions/vrr-monitor/">
+    <key name="graph-color" type="s">
+      <default>"#00FF00"</default>
+      <summary>Graph Color</summary>
+      <description>Color of the refresh rate graph line.</description>
+    </key>
+    <key name="show-fps-text" type="b">
+      <default>true</default>
+      <summary>Show FPS Text</summary>
+      <description>Whether to show the "FPS" or "Hz" suffix next to the number.</description>
+    </key>
+    <key name="graph-width" type="i">
+      <default>100</default>
+      <summary>Graph Width</summary>
+      <description>Width of the refresh rate graph in pixels.</description>
+    </key>
+    <key name="text-color" type="s">
+      <default>"#FFFFFF"</default>
+      <summary>Text Color</summary>
+      <description>Color of the Hz text.</description>
+    </key>
+  </schema>
+</schemalist>

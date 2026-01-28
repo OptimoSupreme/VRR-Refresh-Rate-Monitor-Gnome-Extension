@@ -1,4 +1,16 @@
 .vrr-monitor-label {
-    margin: 0 10px;
+    margin: 0 5px;
     font-weight: bold;
+    font-feature-settings: 'tnum';
+    color: white;
+    /* Keep white text for visibility on dark header */
+}
+
+.vrr-panel-box {
+    margin: 2px 0;
+}
+
+.vrr-graph {
+    margin: 0 5px;
+    /* Removed debug red background */
 }
