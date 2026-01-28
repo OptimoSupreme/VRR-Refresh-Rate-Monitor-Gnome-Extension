@@ -1,12 +1,12 @@
 {
   "name": "VRR Refresh Rate Monitor",
   "description": "Displays the current refresh rate on the top bar. Useful for monitoring VRR performance.",
-  "uuid": "vrr-monitor@antigravity.dev",
+  "uuid": "vrr-monitor",
   "shell-version": [
     "48",
     "49"
   ],
   "url": "https://github.com/justin/vrr-extension",
-  "version": 1,
+  "version": 1.1,
   "settings-schema": "org.gnome.shell.extensions.vrr-monitor"
 }
