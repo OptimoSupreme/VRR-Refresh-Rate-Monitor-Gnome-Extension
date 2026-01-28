@@ -60,6 +60,36 @@ export default class VRRMonitorPreferences extends ExtensionPreferences {
         widthRow.add_suffix(widthScale);
         group.add(widthRow);
 
+        // --- Min Hz ---
+        const minHzRow = new Adw.ActionRow({
+            title: 'Minimum Hz',
+            subtitle: 'The floor value for VRR detection (usually 30 or 48)'
+        });
+
+        const minHzScale = new Gtk.Scale({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            adjustment: new Gtk.Adjustment({
+                lower: 1,
+                upper: 60,
+                step_increment: 1,
+                page_increment: 5
+            }),
+            draw_value: true,
+            value_pos: Gtk.PositionType.LEFT,
+            hexpand: true,
+            vexpand: true
+        });
+
+        settings.bind(
+            'min-hz',
+            minHzScale.get_adjustment(),
+            'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        minHzRow.add_suffix(minHzScale);
+        group.add(minHzRow);
+
         // --- Graph Color ---
         const colorRow = new Adw.ActionRow({
             title: 'Graph Color',
