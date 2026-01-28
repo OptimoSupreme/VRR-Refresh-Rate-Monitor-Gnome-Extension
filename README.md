@@ -13,7 +13,7 @@ A simple GNOME Shell extension that displays the current refresh rate (Hz) on th
 | 49 | ✅ Compatible |
 
 ## How It Works (Disclaimer)
-This extension monitors the GNOME Shell compositor's frame rendering timing to estimate the current refresh rate, it is not an exact 1:1 measurement of your monitor's real world refresh rate. In a VRR setup, your monitor effectively syncs to this rate, so it's pretty close.
+This extension monitors the GNOME Shell compositor's frame rendering timing to estimate the current refresh rate, it is not an exact 1:1 measurement of your monitor's real world refresh rate. In a VRR setup, your monitor effectively syncs to this rate, so it's pretty close. This is a limitation of the compositor's API, as it's currently not possible to get an exact measurement of the refresh rate.
 
 ## Installation
 You can install this extension directly from the GNOME Extensions website:
