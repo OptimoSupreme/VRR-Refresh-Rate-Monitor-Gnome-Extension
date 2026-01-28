@@ -1,0 +1,14 @@
+{
+  "name": "VRR Refresh Rate Monitor",
+  "description": "Monitor and display Variable Refresh Rate (VRR) and current refresh rate in the top panel",
+  "version": 1,
+  "uuid": "vrr-monitor@optimosupreme.github.io",
+  "shell-version": [
+    "42",
+    "43",
+    "44",
+    "45",
+    "46"
+  ],
+  "url": "https://github.com/OptimoSupreme/VRR-Refresh-Rate-Monitor-Gnome-Extension"
+}
