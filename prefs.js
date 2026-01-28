@@ -63,7 +63,7 @@ export default class VRRMonitorPreferences extends ExtensionPreferences {
         // --- Min Hz ---
         const minHzRow = new Adw.ActionRow({
             title: 'Minimum Hz',
-            subtitle: 'The floor value for VRR detection'
+            subtitle: "Set to the minimum of your display's VRR range"
         });
 
         const minHzBox = new Gtk.Box({
