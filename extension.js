@@ -15,104 +15,89 @@ const GRAPH_HEIGHT = 20;
 const RefreshRateIndicator = GObject.registerClass(
     class RefreshRateIndicator extends PanelMenu.Button {
         _init(extension) {
-            try {
-                super._init(0.0, 'VRR Monitor');
+            super._init(0.0, 'VRR Monitor');
 
-                this._extension = extension;
-                this._settings = extension.getSettings();
+            this._extension = extension;
+            this._settings = extension._settings;
 
-                // Mutter settings for VRR detection
-                this._mutterSettings = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
-                this._isVrrEnabled = false;
+            // Mutter settings for VRR detection
+            this._mutterSettings = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
+            this._isVrrEnabled = false;
 
-                // Data history
-                this._history = new Array(HISTORY_SIZE).fill(0);
-                this._currentHz = 0;
+            // Data history
+            this._history = new Array(HISTORY_SIZE).fill(0);
+            this._currentHz = 0;
 
-                // Container for our content
-                let box = new St.BoxLayout({
-                    style_class: 'vrr-panel-box',
-                    vertical: false,
-                    x_expand: false,
-                    y_expand: false
-                });
+            // Container for our content
+            let box = new St.BoxLayout({
+                style_class: 'vrr-panel-box',
+                vertical: false,
+                x_expand: false,
+                y_expand: false
+            });
 
-                console.log('VRR Monitor: Creating DrawingArea');
-                this._drawingArea = new St.DrawingArea({
-                    style_class: 'vrr-graph',
-                    width: this._settings.get_int('graph-width'),
-                    height: GRAPH_HEIGHT,
-                    x_expand: false,
-                    y_expand: false
-                });
-                // Connect to repaint signal
-                this._drawingArea.connect('repaint', this._onRepaint.bind(this));
+            console.log('VRR Monitor: Creating DrawingArea');
+            this._drawingArea = new St.DrawingArea({
+                style_class: 'vrr-graph',
+                width: this._settings.get_int('graph-width'),
+                height: GRAPH_HEIGHT,
+                x_expand: false,
+                y_expand: false
+            });
+            // Connect to repaint signal
+            this._drawingArea.connect('repaint', this._onRepaint.bind(this));
 
-                console.log('VRR Monitor: Creating Label');
-                this._label = new St.Label({
-                    text: 'Init...',
-                    y_align: Clutter.ActorAlign.CENTER,
-                    style_class: 'vrr-monitor-label'
-                });
+            console.log('VRR Monitor: Creating Label');
+            this._label = new St.Label({
+                text: 'Init...',
+                y_align: Clutter.ActorAlign.CENTER,
+                style_class: 'vrr-monitor-label'
+            });
 
-                box.add_child(this._drawingArea);
-                box.add_child(this._label);
+            box.add_child(this._drawingArea);
+            box.add_child(this._label);
 
-                this.add_child(box);
+            this.add_child(box);
 
-                // Add Settings Menu Item
-                this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-                const settingsItem = new PopupMenu.PopupMenuItem('Settings');
-                settingsItem.connect('activate', () => {
-                    this._extension.openPreferences();
-                });
-                this.menu.addMenuItem(settingsItem);
+            // Add Settings Menu Item
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            const settingsItem = new PopupMenu.PopupMenuItem('Settings');
+            settingsItem.connect('activate', () => {
+                this._extension.openPreferences();
+            });
+            this.menu.addMenuItem(settingsItem);
 
-                // State
-                this._lastTime = 0;
-                this._frameCount = 0;
-                this._accumulatedTime = 0;
-                this._frameSignalId = 0;
+            // State
+            this._lastTime = 0;
+            this._frameCount = 0;
+            this._accumulatedTime = 0;
+            this._frameSignalId = 0;
 
-                // Wire settings
-                console.log('VRR Monitor: Connecting Settings');
-                this._settingsSignalId = this._settings.connect('changed', this._onSettingsChanged.bind(this));
+            // Wire settings
+            console.log('VRR Monitor: Connecting Settings');
+            this._settingsSignalId = this._settings.connect('changed', this._onSettingsChanged.bind(this));
 
-                // Watch for VRR changes
-                this._mutterSettingsSignalId = this._mutterSettings.connect('changed::experimental-features', this._checkVrrStatus.bind(this));
+            // Watch for VRR changes
+            this._mutterSettingsSignalId = this._mutterSettings.connect('changed::experimental-features', this._checkVrrStatus.bind(this));
 
-                // Initial setup
-                try {
-                    this._onSettingsChanged();
-                    this._updateMaxHz();
-                    this._checkVrrStatus();
-                } catch (e) {
-                    console.error('VRR Monitor: Error applying settings', e);
-                }
-                console.log('VRR Monitor: Init complete');
-            } catch (e) {
-                console.error('VRR Monitor: FATAL ERROR in _init', e);
-                throw e;
-            }
-        }
+            // Initial setup
+            this._onSettingsChanged();
+            this._updateMaxHz();
+            this._checkVrrStatus();
 
-        enable() {
             console.log('VRR Monitor: Enabling internal indicator');
-            try {
-                this._frameSignalId = global.stage.connect('after-paint', this._onAfterPaint.bind(this));
+            this._frameSignalId = global.stage.connect('after-paint', this._onAfterPaint.bind(this));
 
-                // Monitor configuration changes to update max Hz
-                this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateMaxHz.bind(this));
-                this._updateMaxHz();
+            // Monitor configuration changes to update max Hz
+            this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateMaxHz.bind(this));
+            
+            // Force initial draw
+            this._drawingArea.queue_repaint();
 
-                // Force initial draw
-                this._drawingArea.queue_repaint();
-            } catch (e) {
-                console.error('VRR Monitor: Error in cursor enable', e);
-            }
+            console.log('VRR Monitor: Init complete');
         }
 
-        disable() {
+        destroy() {
             if (this._frameSignalId) {
                 global.stage.disconnect(this._frameSignalId);
                 this._frameSignalId = 0;
@@ -131,46 +116,39 @@ const RefreshRateIndicator = GObject.registerClass(
             }
             this._mutterSettings = null;
             this._lastTime = 0;
+            
+            super.destroy();
         }
 
         _checkVrrStatus() {
-            try {
-                let features = this._mutterSettings.get_strv('experimental-features');
-                this._isVrrEnabled = features.includes('variable-refresh-rate');
-                console.log(`VRR Monitor: VRR Enabled: ${this._isVrrEnabled}`);
-            } catch (e) {
-                console.error('VRR Monitor: Error checking VRR status', e);
-                this._isVrrEnabled = false;
-            }
+            let features = this._mutterSettings.get_strv('experimental-features');
+            this._isVrrEnabled = features.includes('variable-refresh-rate');
+            console.log(`VRR Monitor: VRR Enabled: ${this._isVrrEnabled}`);
         }
 
         _updateMaxHz() {
-            try {
-                // Default fallback
-                this._maxHz = 60;
+            // Default fallback
+            this._maxHz = 60;
 
-                // Get primary monitor index
-                let primaryIndex = global.display.get_primary_monitor();
+            // Get primary monitor index
+            let primaryIndex = global.display.get_primary_monitor();
 
-                // We need to use Meta.MonitorManager to get the refresh rate
-                // Note: global.backend.get_monitor_manager() is available in standard shell
-                let monitorManager = global.backend.get_monitor_manager();
-                let monitors = monitorManager.monitors;
+            // We need to use Meta.MonitorManager to get the refresh rate
+            // Note: global.backend.get_monitor_manager() is available in standard shell
+            let monitorManager = global.backend.get_monitor_manager();
+            let monitors = monitorManager.monitors;
 
-                console.log(`VRR Monitor: Monitors found: ${monitors ? monitors.length : 'null'}`);
+            console.log(`VRR Monitor: Monitors found: ${monitors ? monitors.length : 'null'}`);
 
-                if (monitors && monitors[primaryIndex]) {
-                    let mode = monitors[primaryIndex].get_current_mode();
-                    if (!mode) mode = monitors[primaryIndex].current_mode; // Try property fallback
+            if (monitors && monitors[primaryIndex]) {
+                let mode = monitors[primaryIndex].get_current_mode();
+                if (!mode) mode = monitors[primaryIndex].current_mode; // Try property fallback
 
-                    if (mode) {
-                        // get_refresh_rate() returns float
-                        this._maxHz = mode.get_refresh_rate ? mode.get_refresh_rate() : mode.refresh_rate;
-                        console.log(`VRR Monitor: Detected Max Hz: ${this._maxHz}`);
-                    }
+                if (mode) {
+                    // get_refresh_rate() returns float
+                    this._maxHz = mode.get_refresh_rate ? mode.get_refresh_rate() : mode.refresh_rate;
+                    console.log(`VRR Monitor: Detected Max Hz: ${this._maxHz}`);
                 }
-            } catch (e) {
-                console.error('VRR Monitor: Error fetching max Hz', e);
             }
         }
 
@@ -310,33 +288,21 @@ const RefreshRateIndicator = GObject.registerClass(
 export default class VRRMonitorExtension extends Extension {
     enable() {
         console.log('VRR Monitor: Extension Enable called');
-        try {
-            this._settings = this.getSettings();
-            console.log('VRR Monitor: Settings loaded');
+        this._settings = this.getSettings();
+        console.log('VRR Monitor: Settings loaded');
 
-            this._indicator = new RefreshRateIndicator(this);
-            console.log('VRR Monitor: Indicator instance created');
+        this._indicator = new RefreshRateIndicator(this);
+        console.log('VRR Monitor: Indicator instance created');
 
-            this._indicator.enable();
-
-            Main.panel.addToStatusArea('vrr-monitor', this._indicator, 0, 'right');
-            console.log('VRR Monitor: Added to status area');
-        } catch (e) {
-            console.error('VRR Monitor: FATAL Main Enable Error', e);
-            if (e.stack) console.error(e.stack);
-        }
+        Main.panel.addToStatusArea('vrr-monitor', this._indicator, 0, 'right');
+        console.log('VRR Monitor: Added to status area');
     }
 
     disable() {
         console.log('VRR Monitor: Extension Disable called');
-        try {
-            if (this._indicator) {
-                this._indicator.disable();
-                this._indicator.destroy();
-                this._indicator = null;
-            }
-        } catch (e) {
-            console.error('VRR Monitor: Error disabling', e);
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
         }
         this._settings = null;
     }
