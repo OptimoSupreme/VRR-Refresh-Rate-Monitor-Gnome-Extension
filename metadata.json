@@ -1,7 +1,7 @@
 {
   "name": "VRR Refresh Rate Monitor",
   "description": "Displays the current refresh rate on the top bar. Useful for monitoring VRR performance.",
-  "uuid": "vrr-monitor",
+  "uuid": "vrr-monitor@OptimoSupreme",
   "shell-version": [
     "48",
     "49"
