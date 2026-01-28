@@ -6,7 +6,7 @@
     "48",
     "49"
   ],
-  "url": "https://extensions.gnome.org/extension/9220/vrr-refresh-rate-monitor/",
+  "url": "https://github.com/OptimoSupreme/VRR-Refresh-Rate-Monitor-Gnome-Extension",
   "version": 1,
   "settings-schema": "org.gnome.shell.extensions.vrr-monitor"
 }

@@ -112,38 +112,28 @@ const RefreshRateIndicator = GObject.registerClass(
         _updateMaxHz() {
             this._maxHz = 60; // Default
 
-            try {
-                // Try to get from API first (future proofing)
-                let rate = this._getRateFromApi();
-                if (rate > 60) {
-                    this._maxHz = rate;
-                    return;
-                }
-            } catch (e) {
-                console.warn(e);
+            // Try to get from API first (future proofing)
+            let rate = this._getRateFromApi();
+            if (rate > 60) {
+                this._maxHz = rate;
+                return;
             }
 
             // Fallback: Read from ~/.config/monitors.xml
-            try {
-                let xmlRate = this._getRateFromXml();
-                if (xmlRate > 0) {
-                    this._maxHz = xmlRate;
-                }
-            } catch (e) {
-                console.warn('VRR Monitor: Failed to read monitors.xml', e);
-            }
+            this._getRateFromXml();
         }
 
         _getRateFromApi() {
             // Attempt to use various API methods
-            try {
-                let monitorManager = global.backend.get_monitor_manager();
-                // Check if we can get logical monitors
-                if (monitorManager && typeof monitorManager.get_logical_monitors === 'function') {
-                    let logical = monitorManager.get_logical_monitors();
-                    for (let l of logical) {
-                        if (l.is_primary()) {
-                            let m = l.get_monitors()[0];
+            let monitorManager = global.backend.get_monitor_manager();
+
+            // Check if we can get logical monitors
+            if (monitorManager && typeof monitorManager.get_logical_monitors === 'function') {
+                let logical = monitorManager.get_logical_monitors();
+                for (let l of logical) {
+                    if (l.is_primary()) {
+                        let m = l.get_monitors()[0];
+                        if (m) {
                             let mode = m.get_current_mode();
                             if (mode) {
                                 let r = mode.get_refresh_rate();
@@ -153,46 +143,57 @@ const RefreshRateIndicator = GObject.registerClass(
                         }
                     }
                 }
-            } catch (e) { }
+            }
             return 0;
         }
 
         _getRateFromXml() {
-            try {
-                let path = GLib.build_filenamev([GLib.get_home_dir(), '.config', 'monitors.xml']);
-                let file = Gio.File.new_for_path(path);
+            let path = GLib.build_filenamev([GLib.get_home_dir(), '.config', 'monitors.xml']);
+            let file = Gio.File.new_for_path(path);
 
-                if (!file.query_exists(null)) return 0;
+            file.load_contents_async(null, (obj, res) => {
+                let content;
+                try {
+                    let [success, data] = obj.load_contents_finish(res);
+                    if (!success) return;
+                    content = data;
+                } catch (e) {
+                    console.warn('VRR Monitor: Failed to read monitors.xml', e);
+                    return;
+                }
 
-                let [success, content] = file.load_contents(null);
-                if (!success) return 0;
+                try {
+                    let xml = new TextDecoder().decode(content);
 
-                let xml = new TextDecoder().decode(content);
+                    // Simple regex parser to find primary monitor's rate
+                    let blocks = xml.split('<logicalmonitor>');
+                    let rate = 0;
 
-                // Simple regex parser to find primary monitor's rate
-                // We look for <primary>yes</primary> and then the associated <rate>
-                // OR we just find the highest rate in the file if primary is tricky
-
-                // Strategy: split by <logicalmonitor>
-                let blocks = xml.split('<logicalmonitor>');
-                for (let block of blocks) {
-                    if (block.includes('<primary>yes</primary>')) {
-                        let match = block.match(/<rate>([\d\.]+)<\/rate>/);
-                        if (match && match[1]) {
-                            return parseFloat(match[1]);
+                    for (let block of blocks) {
+                        if (block.includes('<primary>yes</primary>')) {
+                            let match = block.match(/<rate>([\d\.]+)<\/rate>/);
+                            if (match && match[1]) {
+                                rate = parseFloat(match[1]);
+                                break;
+                            }
                         }
                     }
-                }
 
-                // If no primary found (or just one monitor), try first match
-                let match = xml.match(/<rate>([\d\.]+)<\/rate>/);
-                if (match && match[1]) {
-                    return parseFloat(match[1]);
+                    // If no primary found (or just one monitor), try first match
+                    if (rate === 0) {
+                        let match = xml.match(/<rate>([\d\.]+)<\/rate>/);
+                        if (match && match[1]) {
+                            rate = parseFloat(match[1]);
+                        }
+                    }
+
+                    if (rate > 0) {
+                        this._maxHz = rate;
+                    }
+                } catch (e) {
+                    console.warn('VRR Monitor: Error parsing monitors.xml', e);
                 }
-            } catch (e) {
-                console.warn(e);
-            }
-            return 0;
+            });
         }
 
         _onSettingsChanged() {
