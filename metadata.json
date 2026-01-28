@@ -1,0 +1,11 @@
+{
+  "name": "VRR Refresh Rate Monitor",
+  "description": "Displays the current refresh rate on the top bar. Useful for monitoring VRR performance.",
+  "uuid": "vrr-monitor@antigravity.dev",
+  "shell-version": [
+    "48",
+    "49"
+  ],
+  "url": "https://github.com/justin/vrr-extension",
+  "version": 1
+}
