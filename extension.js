@@ -298,7 +298,7 @@ const RefreshRateIndicator = GObject.registerClass(
                 } else {
                     fps = this._frameCount / (this._accumulatedTime / 1000000);
                     if (this._maxHz > 0 && fps > this._maxHz) {
-                        fps = this._maxHz;
+                        this._maxHz = fps;
                     }
 
                     const minHz = this._settings.get_int('min-hz');
