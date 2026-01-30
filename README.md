@@ -1,9 +1,12 @@
-# VRR Monitor for GNOME
+# Mutter Frame Monitor
 
-A simple GNOME Shell extension that displays the current refresh rate (Hz) on the top bar. This extension includes a real-time graph of refresh intervals and a numeric display.
+A lightweight GNOME Shell extension that monitors the frame rate of the Mutter compositor. This tool helps visualize desktop performance, smoothness, and stutter by graphing the interval between global stage paints.
 
-![VRR Monitor Screenshot](screenshots/screenshot.png)
+![Monitor Screenshot](screenshots/screenshot.png)
 
+## What it Monitors
+This extension measures the **Software Composition Rate** of the GNOME Shell (Mutter).
+- **Useful for:** Debugging shell performance, and looking cool.
 
 ## Compatibility
 | GNOME Version | Status |
@@ -12,9 +15,6 @@ A simple GNOME Shell extension that displays the current refresh rate (Hz) on th
 | 48 | ✅ Compatible |
 | 49 | ✅ Compatible |
 
-## How It Works (Disclaimer)
-This extension monitors GNOME Shell's frame rendering to estimate your refresh rate, but this is a software calculation *not* a direct 1:1 sync with your display hardware. It's great for getting a general idea of your effective refresh rate, but it cannot confirm if your display is actually syncing to the GPU. As such, this tool is **not** an effective way to verify VRR functionality or diagnose hardware-level syncing issues.
-
 ## Installation
 You can install this extension directly from the GNOME Extensions website:
-[Install VRR Monitor](https://extensions.gnome.org/extension/9225/vrr-refresh-rate-monitor/)
+[Install Mutter Frame Monitor](https://extensions.gnome.org/extension/9225/vrr-refresh-rate-monitor/)

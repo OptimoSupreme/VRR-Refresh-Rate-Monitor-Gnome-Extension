@@ -15,13 +15,10 @@ const GRAPH_HEIGHT = 20;
 const RefreshRateIndicator = GObject.registerClass(
     class RefreshRateIndicator extends PanelMenu.Button {
         _init(extension) {
-            super._init(0.0, 'VRR Monitor');
+            super._init(0.0, 'Mutter Monitor');
 
             this._extension = extension;
             this._settings = extension._settings;
-
-            this._mutterSettings = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
-            this._isVrrEnabled = false;
 
             this._history = new Array(HISTORY_SIZE).fill(0);
             this._currentHz = 0;
@@ -70,17 +67,9 @@ const RefreshRateIndicator = GObject.registerClass(
 
             this._settingsSignalId = this._settings.connect('changed', this._onSettingsChanged.bind(this));
 
-            this._mutterSettingsSignalId = this._mutterSettings.connect('changed::experimental-features', this._checkVrrStatus.bind(this));
-
             this._onSettingsChanged();
-            this._updateMaxHz();
-            this._checkVrrStatus();
 
             this._frameSignalId = global.stage.connect('after-paint', this._onAfterPaint.bind(this));
-
-            // Re-check periodically in case XML changes or monitors change
-            this._monitorsChangedId = Main.layoutManager.connect('monitors-changed', this._updateMaxHz.bind(this));
-
             this._drawingArea.queue_repaint();
         }
 
@@ -93,111 +82,9 @@ const RefreshRateIndicator = GObject.registerClass(
                 this._settings.disconnect(this._settingsSignalId);
                 this._settingsSignalId = 0;
             }
-            if (this._monitorsChangedId) {
-                Main.layoutManager.disconnect(this._monitorsChangedId);
-                this._monitorsChangedId = 0;
-            }
-            if (this._mutterSettingsSignalId) {
-                this._mutterSettings.disconnect(this._mutterSettingsSignalId);
-                this._mutterSettingsSignalId = 0;
-            }
-            this._mutterSettings = null;
             this._lastTime = 0;
 
             super.destroy();
-        }
-
-        _checkVrrStatus() {
-            let features = this._mutterSettings.get_strv('experimental-features');
-            this._isVrrEnabled = features.includes('variable-refresh-rate');
-        }
-
-        _updateMaxHz() {
-            this._maxHz = 60; // Default
-
-            // Try to get from API first (future proofing)
-            let rate = this._getRateFromApi();
-            if (rate > 60) {
-                this._maxHz = rate;
-                return;
-            }
-
-            // Fallback: Read from ~/.config/monitors.xml
-            this._getRateFromXml();
-        }
-
-        _getRateFromApi() {
-            // Attempt to use various API methods
-            let monitorManager = global.backend.get_monitor_manager();
-
-            // Check if we can get logical monitors
-            if (monitorManager && typeof monitorManager.get_logical_monitors === 'function') {
-                let logical = monitorManager.get_logical_monitors();
-                for (let l of logical) {
-                    const isPrimary = typeof l.is_primary === 'function' ? l.is_primary() : l.is_primary;
-                    if (isPrimary) {
-                        let m = l.get_monitors()[0];
-                        if (m) {
-                            let mode = m.get_current_mode();
-                            if (mode) {
-                                let r = mode.get_refresh_rate();
-                                if (r > 1000) r /= 1000;
-                                return r;
-                            }
-                        }
-                    }
-                }
-            }
-            return 0;
-        }
-
-        _getRateFromXml() {
-            let path = GLib.build_filenamev([GLib.get_home_dir(), '.config', 'monitors.xml']);
-            let file = Gio.File.new_for_path(path);
-
-            file.load_contents_async(null, (obj, res) => {
-                let content;
-                try {
-                    let [success, data] = obj.load_contents_finish(res);
-                    if (!success) return;
-                    content = data;
-                } catch (e) {
-                    console.warn('VRR Monitor: Failed to read monitors.xml', e);
-                    return;
-                }
-
-                try {
-                    let xml = new TextDecoder().decode(content);
-
-                    // Simple regex parser to find primary monitor's rate
-                    let blocks = xml.split('<logicalmonitor>');
-                    let rate = 0;
-
-                    for (let block of blocks) {
-                        if (block.includes('<primary>yes</primary>')) {
-                            let match = block.match(/<rate>([\d\.]+)<\/rate>/);
-                            if (match && match[1]) {
-                                rate = parseFloat(match[1]);
-                                break;
-                            }
-                        }
-                    }
-
-                    // If no primary found (or just one monitor), try first match
-                    if (rate === 0) {
-                        let match = xml.match(/<rate>([\d\.]+)<\/rate>/);
-                        if (match && match[1]) {
-                            rate = parseFloat(match[1]);
-                        }
-                    }
-
-                    if (rate > 0) {
-                        this._maxHz = rate;
-                    }
-                } catch (e) {
-                    console.warn('VRR Monitor: Error parsing monitors.xml', e);
-                }
-            });
         }
 
         _onSettingsChanged() {
@@ -257,7 +144,9 @@ const RefreshRateIndicator = GObject.registerClass(
             cr.setSourceRGBA(r, g, b, 0.5);
             cr.setLineWidth(1.5);
 
-            const maxScale = Math.max(this._maxHz, 60);
+            // Dynamic scaling based on max observed value in history, with a minimum floor of 60
+            // This ensures the graph looks good whether you are at 60Hz or 144Hz
+            const maxVal = Math.max(60, ...this._history);
             const stepX = width / (HISTORY_SIZE - 1);
 
             const padding = 6;
@@ -267,7 +156,7 @@ const RefreshRateIndicator = GObject.registerClass(
 
             for (let i = 0; i < HISTORY_SIZE; i++) {
                 const hz = this._history[i];
-                const y = height - (Math.min(hz, maxScale) / maxScale) * graphHeight;
+                const y = height - (Math.min(hz, maxVal) / maxVal) * graphHeight;
                 if (i === 0) {
                     cr.moveTo(0, y);
                 } else {
@@ -293,22 +182,8 @@ const RefreshRateIndicator = GObject.registerClass(
             this._frameCount++;
             this._accumulatedTime += delta;
 
-            if (this._accumulatedTime >= 250000) {
-                let fps = 0;
-
-                if (!this._isVrrEnabled) {
-                    fps = this._maxHz;
-                } else {
-                    fps = this._frameCount / (this._accumulatedTime / 1000000);
-                    if (this._maxHz > 0 && fps > this._maxHz) {
-                        this._maxHz = fps;
-                    }
-
-                    const minHz = this._settings.get_int('min-hz');
-                    if (fps < minHz) {
-                        fps = minHz;
-                    }
-                }
+            if (this._accumulatedTime >= 250000) { // Update every 250ms
+                const fps = this._frameCount / (this._accumulatedTime / 1000000);
 
                 this._currentHz = fps;
                 this._history.shift();

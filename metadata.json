@@ -1,6 +1,6 @@
 {
-  "name": "VRR Refresh Rate Monitor",
-  "description": "Displays the current refresh rate on the top bar. Useful for monitoring VRR performance.",
+  "name": "Mutter Frame Monitor",
+  "description": "Monitors the frame rate of the GNOME Shell compositor (Mutter). Useful for detecting desktop stutter and performance issues, and looking cool.",
   "uuid": "vrr-monitor@OptimoSupreme",
   "shell-version": [
     "48",

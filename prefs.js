@@ -75,60 +75,7 @@ export default class VRRMonitorPreferences extends ExtensionPreferences {
         widthRow.add_suffix(widthScale);
         group.add(widthRow);
 
-        // --- Min Hz ---
-        const minHzRow = new Adw.ActionRow({
-            title: 'Minimum Hz',
-            subtitle: "Set to the minimum of your display's VRR range"
-        });
 
-        const minHzBox = new Gtk.Box({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            spacing: 12,
-            valign: Gtk.Align.CENTER
-        });
-
-        const minHzAdjustment = new Gtk.Adjustment({
-            lower: 1,
-            upper: 60,
-            step_increment: 1,
-            page_increment: 5
-        });
-
-        const minHzScale = new Gtk.Scale({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            adjustment: minHzAdjustment,
-            draw_value: false,
-            hexpand: true,
-            width_request: 150
-        });
-
-        // Add marks for common VRR minimums
-        minHzScale.add_mark(24, Gtk.PositionType.BOTTOM, '24');
-        minHzScale.add_mark(30, Gtk.PositionType.BOTTOM, '30');
-        minHzScale.add_mark(40, Gtk.PositionType.BOTTOM, '40');
-        minHzScale.add_mark(48, Gtk.PositionType.BOTTOM, '48');
-        minHzScale.add_mark(60, Gtk.PositionType.BOTTOM, '60');
-
-        const minHzSpin = new Gtk.SpinButton({
-            adjustment: minHzAdjustment,
-            climb_rate: 1,
-            digits: 0,
-            numeric: true,
-            valign: Gtk.Align.CENTER
-        });
-
-        settings.bind(
-            'min-hz',
-            minHzAdjustment,
-            'value',
-            Gio.SettingsBindFlags.DEFAULT
-        );
-
-        minHzBox.append(minHzScale);
-        minHzBox.append(minHzSpin);
-
-        minHzRow.add_suffix(minHzBox);
-        group.add(minHzRow);
 
         // --- Graph Color ---
         const colorRow = new Adw.ActionRow({

@@ -21,11 +21,6 @@
       <summary>Text Color</summary>
       <description>Color of the Hz text.</description>
     </key>
-    <key name="min-hz" type="i">
-      <default>30</default>
-      <summary>Minimum Hz</summary>
-      <description>The minimum refresh rate floor for the VRR display.</description>
-    </key>
     <key name="show-graph" type="b">
       <default>true</default>
       <summary>Show Graph</summary>
